@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Domain } from '../types';
-import { CloseIcon, BookmarkIcon, RefreshIcon } from './icons';
+import { CloseIcon, BookmarkIcon, RefreshIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
 import { generateDomainDescription } from '../services/pollinationsService';
 import { useAuth } from '../contexts/AuthContext';
 import { useStatus } from '../contexts/StatusContext';
@@ -22,6 +22,9 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ domain, domainPat
   const [isSaving, setIsSaving] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [savedDocId, setSavedDocId] = useState<string | null>(null);
+  const [userImages, setUserImages] = useState<string[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const slideInterval = useRef<NodeJS.Timeout | null>(null);
 
   const fetchDescription = useCallback(async () => {
     if (!domain) return;
@@ -43,6 +46,26 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ domain, domainPat
   useEffect(() => {
     if (domain) {
       fetchDescription();
+
+      // Fetch user images for this domain
+      const fetchUserImages = async () => {
+        try {
+          const res = await execute(
+            `SELECT imageURL FROM posts WHERE domain_id = ? AND imageURL IS NOT NULL AND imageURL != '' ORDER BY created_at DESC LIMIT 10`,
+            [domain.id]
+          );
+          const images = res.map((r: any) => r.imageURL);
+          if (images.length > 0) {
+            setUserImages(images);
+            setCurrentImageIndex(0);
+          } else {
+            setUserImages([]);
+          }
+        } catch (e) {
+          console.error("Failed to fetch domain images", e);
+        }
+      };
+      fetchUserImages();
 
       if (user) {
         const checkSavedStatus = async () => {
@@ -70,6 +93,30 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ domain, domainPat
       }
     }
   }, [domain, user, fetchDescription]);
+
+  // Auto-slide effect
+  useEffect(() => {
+    if (userImages.length > 1) {
+      slideInterval.current = setInterval(() => {
+        setCurrentImageIndex(prev => (prev + 1) % userImages.length);
+      }, 3000); // 3 seconds
+    }
+    return () => {
+      if (slideInterval.current) clearInterval(slideInterval.current);
+    };
+  }, [userImages]);
+
+  const nextImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (slideInterval.current) clearInterval(slideInterval.current); // Pause auto-slide on interaction
+    setCurrentImageIndex(prev => (prev + 1) % userImages.length);
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (slideInterval.current) clearInterval(slideInterval.current);
+    setCurrentImageIndex(prev => (prev - 1 + userImages.length) % userImages.length);
+  };
 
   if (!domain) return null;
 
@@ -127,17 +174,48 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ domain, domainPat
             </div>
           )}
           <img
-            src={imageUrl}
+            src={userImages.length > 0 ? userImages[currentImageIndex] : imageUrl}
             alt={domain.name}
-            className={`w-full h-full object-cover transition-opacity duration-700 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+            className={`w-full h-full object-cover transition-opacity duration-700 ${imageLoaded || userImages.length > 0 ? 'opacity-100' : 'opacity-0'}`}
             onLoad={() => setImageLoaded(true)}
             onError={(e) => {
+              // Fallback if user image fails, could try next or just hide
+              if (userImages.length > 0) {
+                // removing broken image from list slightly risky during render, assume generic fallback or just hide
+              }
               e.currentTarget.style.display = 'none';
               setImageLoaded(true);
             }}
           />
+
+          {/* Navigation Buttons for User Images */}
+          {userImages.length > 1 && (
+            <>
+              <button
+                onClick={prevImage}
+                className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors backdrop-blur-md border border-white/10 z-10"
+              >
+                <ChevronLeftIcon className="w-5 h-5" />
+              </button>
+              <button
+                onClick={nextImage}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors backdrop-blur-md border border-white/10 z-10"
+              >
+                <ChevronRightIcon className="w-5 h-5" />
+              </button>
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1.5 z-10">
+                {userImages.map((_, idx) => (
+                  <div
+                    key={idx}
+                    className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentImageIndex ? 'bg-white scale-125' : 'bg-white/40'}`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
           {/* Subtle overlay gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 pointer-events-none"></div>
         </div>
 
         <div className="text-[var(--text-color)] text-[15px] mb-8 min-h-[5rem] max-h-48 overflow-y-auto transition-opacity duration-300 whitespace-pre-wrap leading-relaxed description-scrollbar pr-2 font-light">
