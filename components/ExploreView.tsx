@@ -835,7 +835,7 @@ const ExploreView: React.FC<ExploreViewProps> = ({ setCurrentView, initialPath, 
             {/* New: Create Post (Mobile Sphere Post Option) - Bottom Left */}
             <button
                 onClick={() => setCreatePostModalOpen(true)}
-                className="md:hidden absolute bottom-[74px] left-4 z-10 p-4 glass-dock rounded-full hover:bg-white/10 text-slate-300 hover:text-white transition-all active:scale-95 shadow-xl border border-white/10 group backdrop-blur-md bg-black/40"
+                className="md:hidden fixed bottom-[calc(74px+env(safe-area-inset-bottom))] left-4 z-40 p-4 glass-dock rounded-full hover:bg-white/10 text-slate-300 hover:text-white transition-all active:scale-95 shadow-xl border border-white/10 group backdrop-blur-md bg-black/40"
                 title="Post to Sphere"
             >
                 <EditIcon className="w-6 h-6" />
@@ -844,7 +844,7 @@ const ExploreView: React.FC<ExploreViewProps> = ({ setCurrentView, initialPath, 
             <button
                 onClick={handleRefreshClick}
                 disabled={isMoreLoading || isLoading}
-                className="md:hidden absolute bottom-[74px] left-1/2 -translate-x-1/2 z-10 p-4 glass-dock rounded-full hover:bg-white/10 text-slate-300 hover:text-white transition-all active:scale-95 shadow-xl border border-white/10 group backdrop-blur-md bg-black/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="md:hidden fixed bottom-[calc(74px+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-40 p-4 glass-dock rounded-full hover:bg-white/10 text-slate-300 hover:text-white transition-all active:scale-95 shadow-xl border border-white/10 group backdrop-blur-md bg-black/40 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Load More Topics"
             >
                 {(isMoreLoading || isLoading) ? (
@@ -855,7 +855,7 @@ const ExploreView: React.FC<ExploreViewProps> = ({ setCurrentView, initialPath, 
             </button>
 
             {/* Floating Zoom Controls - Visible on Mobile now but smaller */}
-            <div className="flex absolute bottom-[74px] right-4 md:bottom-32 md:right-6 flex-col space-y-3 z-10 scale-90 md:scale-100 origin-bottom-right">
+            <div className="flex fixed bottom-[calc(74px+env(safe-area-inset-bottom))] right-4 md:bottom-32 md:right-6 flex-col space-y-3 z-40 scale-90 md:scale-100 origin-bottom-right">
                 {/* Pinch Toggle (Mobile Only) */}
                 <button
                     onClick={() => setPinchEnabled(!isPinchEnabled)}
