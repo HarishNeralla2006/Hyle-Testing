@@ -204,7 +204,7 @@ const Home: React.FC = () => {
                     onOpenCreatePostModal={() => handleOpenCreateModal()}
                 />
 
-                <main className={`flex-1 flex w-full min-w-0 relative flex-col overflow-hidden md:pt-0 md:pb-0 ${currentView.type === ViewType.Chat ? 'pt-0 pb-0' : 'pt-14 pb-24'}`}>
+                <main className={`flex-1 flex w-full min-w-0 relative flex-col overflow-hidden md:pt-0 md:pb-0 ${currentView.type === ViewType.Chat ? 'pt-0 pb-0' : 'pt-14 pb-20'}`}>
                     {renderView()}
 
                     {currentView.overlayProfileId && (
