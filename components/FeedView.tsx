@@ -200,7 +200,7 @@ const PostCard: React.FC<{ post: PostWithAuthorAndLikes; onToggleLike: () => voi
 };
 
 interface FeedViewProps {
-    setCurrentView: (view: ViewState) => void;
+    setCurrentView: React.Dispatch<React.SetStateAction<ViewState>>;
 }
 
 import TopicSelector from './TopicSelector';
@@ -486,7 +486,7 @@ const FeedView: React.FC<FeedViewProps> = ({ setCurrentView }) => {
                                     onComment={(content, parentId) => handleCreateComment(post.id, content, parentId)}
                                     onDeleteComment={(commentId) => handleDeleteComment(post.id, commentId)}
                                     currentUserId={user?.uid}
-                                    onUserClick={(uid) => setCurrentView({ type: ViewType.Profile, userId: uid })}
+                                    onUserClick={(uid) => setCurrentView((prev) => ({ ...prev, overlayProfileId: uid }))}
                                 />
                             </div>
                         ))
