@@ -202,6 +202,22 @@ const ChatView: React.FC<ChatViewProps> = ({ chatId, otherUserId, setCurrentView
                                 <div className="w-full h-full bg-[var(--primary-accent)] flex items-center justify-center text-2xl font-bold text-white">{otherProfile?.username?.[0]}</div>
                             )}
                         </div>
+
+                        {/* Logic to distinguish SENDER vs RECEIVER of the request */}
+                        {/* We don't have a direct 'isSender' flag from DB here easily without joining, 
+                            BUT valid assumptions: 
+                            If I am 'pending', I am the receiver (waiting to accept).
+                            If I am 'accepted' but the OTHER is 'pending', I am the sender.
+                            The current code fetched MY status into `status`.
+                            If `status` is 'pending', then *I* need to accept.
+                            
+                            Wait, if I started the chat, my status is 'accepted' (from chatService).
+                            The other person is 'pending'. 
+                            So this block only shows if *I* am pending. 
+                            
+                            We need a block for when *I* am accepted but *They* are pending.
+                         */}
+
                         <h2 className="text-[var(--text-color)] text-xl font-bold mb-2">{otherProfile?.username} wants to chat</h2>
                         <p className="text-[var(--text-color)]/60 text-sm mb-8 max-w-xs">Accepting this request will allow them to send you messages and see your status.</p>
 

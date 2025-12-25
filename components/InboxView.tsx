@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { execute } from '../lib/tidbClient';
 import { useAuth } from '../contexts/AuthContext';
 import { ViewState, ViewType, ChatSession } from '../types';
-import { ProfileIcon, SearchIcon } from './icons';
+import { ProfileIcon, SearchIcon, PlusCircleIcon, CloseIcon } from './icons';
 
 interface InboxViewProps {
     setCurrentView: (view: ViewState) => void;
@@ -14,6 +14,19 @@ const InboxView: React.FC<InboxViewProps> = ({ setCurrentView }) => {
     const [requests, setRequests] = useState<ChatSession[]>([]);
     const [activeTab, setActiveTab] = useState<'primary' | 'requests'>('primary');
     const [loading, setLoading] = useState(true);
+    const [showNewChat, setShowNewChat] = useState(false);
+    const [followList, setFollowList] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (showNewChat && user) {
+            execute(`
+                SELECT p.* FROM profiles p 
+                JOIN follows f ON (f.following_id = p.id AND f.follower_id = ?) 
+                OR (f.follower_id = p.id AND f.following_id = ?)
+                GROUP BY p.id
+            `, [user.uid, user.uid]).then(res => setFollowList(res));
+        }
+    }, [showNewChat, user]);
 
     useEffect(() => {
         if (!user) return;
@@ -80,6 +93,18 @@ const InboxView: React.FC<InboxViewProps> = ({ setCurrentView }) => {
         });
     };
 
+    const startNewChat = async (targetId: string) => {
+        if (!user) return;
+        try {
+            const { getOrCreateChat } = await import('../services/chatService');
+            const chatId = await getOrCreateChat(user.uid, targetId);
+            setCurrentView({ type: ViewType.Chat, chatId, otherUserId: targetId });
+            setShowNewChat(false);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
     if (loading) return <div className="p-10 flex justify-center"><div className="w-6 h-6 border-2 border-indigo-500 rounded-full animate-spin"></div></div>;
 
     return (
@@ -103,6 +128,13 @@ const InboxView: React.FC<InboxViewProps> = ({ setCurrentView }) => {
                         {activeTab === 'requests' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[var(--primary-accent)] rounded-full"></div>}
                     </button>
                 </div>
+
+                <button
+                    onClick={() => setShowNewChat(true)}
+                    className="absolute top-6 right-6 p-2 rounded-full bg-[var(--primary-accent)] text-white shadow-lg hover:scale-110 transition-transform"
+                >
+                    <PlusCircleIcon className="w-5 h-5" />
+                </button>
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
@@ -148,7 +180,38 @@ const InboxView: React.FC<InboxViewProps> = ({ setCurrentView }) => {
                 )}
             </div>
 
-        </div>
+
+
+            {/* New Chat Modal */}
+            {
+                showNewChat && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in" onClick={() => setShowNewChat(false)}>
+                        <div className="bg-[#111] border border-white/10 w-full max-w-sm rounded-2xl shadow-2xl flex flex-col max-h-[80vh]" onClick={e => e.stopPropagation()}>
+                            <div className="p-4 border-b border-white/10 flex justify-between items-center">
+                                <h3 className="font-bold text-white">New Message</h3>
+                                <button onClick={() => setShowNewChat(false)}><CloseIcon className="w-5 h-5 text-slate-400" /></button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
+                                {followList.length === 0 ? (
+                                    <div className="p-4 text-center text-slate-500 text-sm">
+                                        No connections found.<br />Follow someone to message them!
+                                    </div>
+                                ) : (
+                                    followList.map(u => (
+                                        <div key={u.id} onClick={() => startNewChat(u.id)} className="flex items-center p-3 hover:bg-white/5 rounded-xl cursor-pointer transition-colors">
+                                            <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden mr-3">
+                                                {u.photoURL ? <img src={u.photoURL} className="w-full h-full object-cover" /> : null}
+                                            </div>
+                                            <span className="font-bold text-white">{u.username}</span>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 
