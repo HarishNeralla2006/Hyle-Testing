@@ -131,7 +131,7 @@ OR(f.follower_id = p.id AND f.following_id = ?)
 
                 <button
                     onClick={() => setShowNewChat(true)}
-                    className="absolute bottom-24 right-6 p-4 rounded-full bg-[var(--primary-accent)] text-black shadow-[0_0_20px_rgba(255,215,0,0.3)] hover:scale-110 transition-transform z-20"
+                    className="fixed bottom-[calc(74px+env(safe-area-inset-bottom))] right-6 p-4 rounded-full bg-[var(--primary-accent)] text-black shadow-[0_0_20px_rgba(255,215,0,0.3)] hover:scale-110 transition-transform z-20"
                 >
                     <PlusCircleIcon className="w-6 h-6" />
                 </button>
