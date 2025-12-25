@@ -99,13 +99,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ domain, domainPat
     }
   };
 
-  const getSearchSubject = () => {
-    if (domainPath && domainPath.length >= 2) {
-      return domainPath.slice(-2).join(' ');
-    }
-    return domain.name;
-  };
-  const searchQuery = `${getSearchSubject()} aesthetic cinematic`;
+  const searchQuery = `${domain.name} aesthetic cinematic`;
   const imageUrl = `https://tse2.mm.bing.net/th?q=${encodeURIComponent(searchQuery)}&w=800&h=450&c=7&rs=1&p=0&dpr=2&pid=1.7&mkt=en-US&adlt=moderate`;
 
   return (
