@@ -25,6 +25,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ domain, domainPat
   const [userImages, setUserImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const slideInterval = useRef<NodeJS.Timeout | null>(null);
+  const [isCheckingImages, setIsCheckingImages] = useState(true);
 
   const fetchDescription = useCallback(async () => {
     if (!domain) return;
@@ -49,6 +50,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ domain, domainPat
 
       // Fetch user images for this domain
       const fetchUserImages = async () => {
+        setIsCheckingImages(true);
         try {
           const res = await execute(
             `SELECT imageURL FROM posts WHERE domain_id = ? AND imageURL IS NOT NULL AND imageURL != '' ORDER BY created_at DESC LIMIT 10`,
@@ -63,6 +65,8 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ domain, domainPat
           }
         } catch (e) {
           console.error("Failed to fetch domain images", e);
+        } finally {
+          setIsCheckingImages(false);
         }
       };
       fetchUserImages();
@@ -168,25 +172,24 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ domain, domainPat
         </div>
 
         <div className="aspect-video bg-black/40 rounded-2xl flex items-center justify-center mb-6 border border-white/10 shadow-inner overflow-hidden relative group">
-          {!imageLoaded && (
-            <div className="absolute inset-0 flex items-center justify-center">
+          {(isCheckingImages || !imageLoaded) && (
+            <div className="absolute inset-0 flex items-center justify-center z-20">
               <span className="text-5xl opacity-50 filter drop-shadow-lg animate-pulse">✨</span>
             </div>
           )}
-          <img
-            src={userImages.length > 0 ? userImages[currentImageIndex] : imageUrl}
-            alt={domain.name}
-            className={`w-full h-full object-cover transition-opacity duration-700 ${imageLoaded || userImages.length > 0 ? 'opacity-100' : 'opacity-0'}`}
-            onLoad={() => setImageLoaded(true)}
-            onError={(e) => {
-              // Fallback if user image fails, could try next or just hide
-              if (userImages.length > 0) {
-                // removing broken image from list slightly risky during render, assume generic fallback or just hide
-              }
-              e.currentTarget.style.display = 'none';
-              setImageLoaded(true);
-            }}
-          />
+
+          {!isCheckingImages && (
+            <img
+              src={userImages.length > 0 ? userImages[currentImageIndex] : imageUrl}
+              alt={domain.name}
+              className={`w-full h-full object-cover transition-opacity duration-700 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+              onLoad={() => setImageLoaded(true)}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                setImageLoaded(true);
+              }}
+            />
+          )}
 
           {/* Navigation Buttons for User Images */}
           {userImages.length > 1 && (
